@@ -1,5 +1,6 @@
 CC=clang++
 CFLAGS=-Wall -std=c++11
+LDLIBS=-lasound
 
 OBJ_DIR=objects
 OBJS=$(patsubst %.cpp, $(OBJ_DIR)/%.o, $(wildcard *.cpp))
