@@ -16,6 +16,7 @@ $(OBJ_DIR)/%.o: %.cpp
 clean:
 	-rm -rf $(OBJ_DIR)
 	-rm -rf *.bin *.o
+	-rm -rf *.wav
 
 .PHONY: run
 run:
