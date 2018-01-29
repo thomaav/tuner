@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <cstdlib>
 #include <alsa/asoundlib.h>
 
 constexpr char pcm_name[] = "default";
@@ -82,9 +83,36 @@ snd_pcm_t *get_pcm_capture_handle()
 	return capture_handle;
 }
 
+void get_samples(snd_pcm_t *handle, short *buf, std::size_t nsamples)
+{
+	int err;
+
+	while (nsamples) {
+		err = snd_pcm_readi(handle, buf, nsamples);
+
+		if (!err) {
+			printf("End of (%s)", pcm_name);
+			exit(1);
+		}
+
+		if (err < 0) {
+			fprintf(stderr, "Read from audio interface %s failed: (%s)", pcm_name, snd_strerror(err));
+			exit(1);
+		}
+
+		buf += err;
+		nsamples -= err;
+	}
+}
+
 int main(int argc, char *argv[1])
 {
-	snd_pcm_t *pcm_handle = get_pcm_capture_handle();
+	int samples = 128;
 
-	char *buffer = new char[128 * snd_pcm_format_width(format) / 2 * 2];
+	snd_pcm_t *pcm_handle = get_pcm_capture_handle();
+	short *buf = new short[samples * snd_pcm_format_width(format) / 8];
+	get_samples(pcm_handle, buf, samples);
+
+	snd_pcm_close(pcm_handle);
+	free(buf);
 }
