@@ -19,4 +19,4 @@ clean:
 
 .PHONY: run
 run:
-	-make && ./main.bin default
+	-make && ./main.bin

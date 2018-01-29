@@ -91,12 +91,12 @@ void get_samples(snd_pcm_t *handle, short *buf, std::size_t nsamples)
 		err = snd_pcm_readi(handle, buf, nsamples);
 
 		if (!err) {
-			printf("End of (%s)", pcm_name);
+			printf("End of device: (%s)\n", pcm_name);
 			exit(1);
 		}
 
 		if (err < 0) {
-			fprintf(stderr, "Read from audio interface %s failed: (%s)", pcm_name, snd_strerror(err));
+			fprintf(stderr, "Read from audio interface %s failed: (%s)\n", pcm_name, snd_strerror(err));
 			exit(1);
 		}
 
@@ -107,11 +107,15 @@ void get_samples(snd_pcm_t *handle, short *buf, std::size_t nsamples)
 
 int main(int argc, char *argv[1])
 {
-	int samples = 128;
+	size_t samples = 44100;
 
 	snd_pcm_t *pcm_handle = get_pcm_capture_handle();
 	short *buf = new short[samples * snd_pcm_format_width(format) / 8];
 	get_samples(pcm_handle, buf, samples);
+
+	for (int i = 0; i < samples; ++i) {
+		printf("%d\n", buf[i]);
+	}
 
 	snd_pcm_close(pcm_handle);
 	free(buf);
