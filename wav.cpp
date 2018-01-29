@@ -38,7 +38,7 @@ void write_wav(short *buf, size_t nsamples)
 	f << "data----";  // (chunk size to be filled in later)
 
 	for (int i = 0; i < nsamples; ++i) {
-		write_word(f, (int)(buf[i]));
+		write_word(f, (buf[i]));
 	}
 
 	// (We'll need the final file size to fix the chunk sizes above)
