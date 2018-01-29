@@ -16,3 +16,7 @@ $(OBJ_DIR)/%.o: %.cpp
 clean:
 	-rm -rf $(OBJ_DIR)
 	-rm -rf *.bin *.o
+
+.PHONY: run
+run:
+	-make && ./main.bin default
