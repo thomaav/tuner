@@ -5,6 +5,13 @@
 #include "capture.h"
 #include "wav.h"
 
+constexpr fft_size = 4096;
+
+void hamming_window(double *in, size_t nsamples)
+{
+	;
+}
+
 void fft(short *buf, size_t nsamples)
 {
 	double *in;
