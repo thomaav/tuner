@@ -1,7 +1,13 @@
 #include <alsa/asoundlib.h>
+#include <fftw3.h>
 
 #include "capture.h"
 #include "wav.h"
+
+void fft(short *buf, size_t nsamples)
+{
+	;
+}
 
 int main(int argc, char *argv[1])
 {
@@ -13,6 +19,8 @@ int main(int argc, char *argv[1])
 	get_samples(pcm_handle, buf, samples);
 
 	write_wav(buf, samples);
+
+	fft(buf, samples);
 
 	snd_pcm_close(pcm_handle);
 	free(buf);
