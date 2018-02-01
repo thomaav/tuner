@@ -2,6 +2,7 @@
 #include <fftw3.h>
 #include <algorithm>
 #include <cmath>
+#include <utility>
 
 #include "capture.h"
 #include "wav.h"
@@ -10,7 +11,7 @@
 constexpr double alpha = 0.54;
 constexpr double beta  = 0.46;
 
-constexpr int fft_size = 4096;
+constexpr int fft_size = 1024;
 constexpr int useful_bins = fft_size / 2;
 constexpr int step_size = fft_size / 2; // 50% window overlap
 
@@ -25,11 +26,26 @@ double * hamming(int fft_size)
 	return window;
 }
 
+std::pair<int, double> find_peak_frequency(double *bins, int frame_size)
+{
+	int peak_bin = 0;
+	double peak = bins[peak_bin];
+
+	for (int i = 0; i < frame_size; ++i) {
+		if (bins[i] > peak) {
+			peak = bins[i];
+			peak_bin = i;
+		}
+	}
+
+	return std::make_pair(peak_bin, peak);
+}
+
 void fft(short *samples, size_t nsamples)
 {
 	double *in;
 	fftw_complex *out;
-	double processed[useful_bins];
+	double bins[useful_bins];
 	fftw_plan plan;
 
 	in = fftw_alloc_real(fft_size);
@@ -49,18 +65,18 @@ void fft(short *samples, size_t nsamples)
 		fftw_execute(plan);
 
 		// process values into values relevant to create
-		// spectogram, only the first fft_size / 2 bins are
+		// spectrogram, only the first fft_size / 2 bins are
 		// useful
 		for (int i = 0; i < useful_bins; ++i) {
 			out[i][0] *= (2.0 / fft_size);
 			out[i][1] *= (2.0 / fft_size);
-			processed[i] = out[i][0] * out[i][0] + out[i][1] * out[i][1];
-			processed[i] = 10.0 / log(10.0) * log(processed[i] + 1e-6);
+			bins[i] = out[i][0] * out[i][0] + out[i][1] * out[i][1];
+			bins[i] = 10.0 / log(10.0) * log(bins[i] + 1e-6);
 
 			// normalize values in range 0dB to 96dB to be values
 			// between 0 and 1
-			processed[i] = fmax(0, processed[i]);
-			processed[i] = fmax(1, processed[i] / 96.0);
+			bins[i] = fmax(0, bins[i]);
+			bins[i] = fmax(1, bins[i] / 96.0);
 		}
 	}
 
