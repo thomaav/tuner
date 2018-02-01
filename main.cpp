@@ -28,7 +28,12 @@ double * hamming(int fft_size)
 	return window;
 }
 
-double bin_to_frequency(int bin, int sample_rate, int frame_size)
+double interpolate_peak_bin(double left, double mid, double right)
+{
+	return (left - right) / (2.0 * (right + left - 2.0 * mid));
+}
+
+double bin_to_frequency(double bin, double sample_rate, double frame_size)
 {
 	return double(bin) * sample_rate / double(frame_size);
 }
@@ -46,7 +51,10 @@ double find_peak_frequency(double *bins, int frame_size)
 		}
 	}
 
-	return bin_to_frequency(peak_bin, sample_rate, frame_size);
+	double interpolated_peak_bin = interpolate_peak_bin(bins[peak_bin - 1],
+							    bins[peak_bin],
+							    bins[peak_bin + 1]);
+	return bin_to_frequency(peak_bin + interpolated_peak_bin, sample_rate, frame_size);
 }
 
 double find_median_frequency(std::vector<double> &peaks)
@@ -93,13 +101,14 @@ void fft(short *samples, size_t nsamples)
 			// normalize values in range 0dB to 96dB to be values
 			// between 0 and 1
 			bins[i] = fmax(0, bins[i]);
-			bins[i] = fmin(1, bins[i] / 96.0);
+			// bins[i] = fmin(1, bins[i] / 96.0);
 		}
 
 		peak = find_peak_frequency(bins, fft_size);
 		peaks.push_back(peak);
 	}
 
+	// find_median_frequency(peaks);
 	printf("%f\n", find_median_frequency(peaks));
 
 	free(hamming_window);
