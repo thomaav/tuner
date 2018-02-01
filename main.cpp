@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <utility>
+#include <vector>
 
 #include "capture.h"
 #include "wav.h"
@@ -47,18 +48,28 @@ double find_peak_frequency(double *bins, int frame_size)
 	return bin_to_frequency(peak_bin, sample_rate, frame_size);
 }
 
+double find_median_frequency(std::vector<double> &peaks)
+{
+	size_t n = peaks.size() / 2;
+	std::nth_element(peaks.begin(), peaks.begin() + n, peaks.end());
+	return peaks[n];
+}
+
 void fft(short *samples, size_t nsamples)
 {
+	double peak;
+	std::vector<double> peaks;
+
 	double *in;
 	fftw_complex *out;
 	double bins[num_bins];
 	fftw_plan plan;
 
+	double *hamming_window = hamming(fft_size);
+
 	in = fftw_alloc_real(fft_size);
 	out = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * fft_size);
 	plan = fftw_plan_dft_r2c_1d(fft_size, in, out, FFTW_ESTIMATE);
-
-	double *hamming_window = hamming(fft_size);
 
 	for (int x = 0; x < nsamples / step_size; ++x) {
 		// process all samples of one FFT period, i.e. period
@@ -84,23 +95,27 @@ void fft(short *samples, size_t nsamples)
 			bins[i] = fmin(1, bins[i] / 96.0);
 		}
 
-		printf("%f\n", find_peak_frequency(bins, num_bins));
+		peak = find_peak_frequency(bins, num_bins);
+		peaks.push_back(peak);
 	}
 
+	printf("%f\n", find_median_frequency(peaks));
+
 	fftw_destroy_plan(plan);
+	free(hamming_window);
 	fftw_free(in); fftw_free(out);
 }
 
 int main(int argc, char *argv[1])
 {
-	size_t samples = 22050;
+	size_t samples_per_period = 22050;
 
 	snd_pcm_t *pcm_handle = get_pcm_capture_handle();
-	short *chunk = new short[samples * snd_pcm_format_width(format) / 8];
+	short *chunk = new short[samples_per_period * snd_pcm_format_width(format) / 8];
 
 	for ( ;; ) {
-		get_samples(pcm_handle, chunk, samples);
-		fft(chunk, samples);
+		get_samples(pcm_handle, chunk, samples_per_period);
+		fft(chunk, samples_per_period);
 	}
 
 	snd_pcm_close(pcm_handle);
