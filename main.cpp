@@ -11,8 +11,9 @@
 constexpr double alpha = 0.54;
 constexpr double beta  = 0.46;
 
+constexpr int sample_rate = 44100;
 constexpr int fft_size = 1024;
-constexpr int useful_bins = fft_size / 2;
+constexpr int num_bins = fft_size / 2;
 constexpr int step_size = fft_size / 2; // 50% window overlap
 
 double * hamming(int fft_size)
@@ -26,7 +27,12 @@ double * hamming(int fft_size)
 	return window;
 }
 
-std::pair<int, double> find_peak_frequency(double *bins, int frame_size)
+double bin_to_frequency(int bin, int sample_rate, int frame_size)
+{
+	return double(bin) * sample_rate / double(frame_size);
+}
+
+double find_peak_frequency(double *bins, int frame_size)
 {
 	int peak_bin = 0;
 	double peak = bins[peak_bin];
@@ -38,14 +44,14 @@ std::pair<int, double> find_peak_frequency(double *bins, int frame_size)
 		}
 	}
 
-	return std::make_pair(peak_bin, peak);
+	return bin_to_frequency(peak_bin, sample_rate, frame_size);
 }
 
 void fft(short *samples, size_t nsamples)
 {
 	double *in;
 	fftw_complex *out;
-	double bins[useful_bins];
+	double bins[num_bins];
 	fftw_plan plan;
 
 	in = fftw_alloc_real(fft_size);
@@ -58,16 +64,15 @@ void fft(short *samples, size_t nsamples)
 		// process all samples of one FFT period, i.e. period
 		// of fft_size amount of samples, windows will overlap
 		// 50% by using step_size as fft_size / 2
-		for (int i = 0, j = x * step_size; j < x * step_size + fft_size; ++i, ++j) {
+		for (int i = 0, j = x * step_size; j < x * step_size + fft_size; ++i, ++j)
 			in[i] = samples[j] * hamming_window[i];
-		}
 
 		fftw_execute(plan);
 
 		// process values into values relevant to create
 		// spectrogram, only the first fft_size / 2 bins are
 		// useful
-		for (int i = 0; i < useful_bins; ++i) {
+		for (int i = 0; i < num_bins; ++i) {
 			out[i][0] *= (2.0 / fft_size);
 			out[i][1] *= (2.0 / fft_size);
 			bins[i] = out[i][0] * out[i][0] + out[i][1] * out[i][1];
@@ -76,8 +81,10 @@ void fft(short *samples, size_t nsamples)
 			// normalize values in range 0dB to 96dB to be values
 			// between 0 and 1
 			bins[i] = fmax(0, bins[i]);
-			bins[i] = fmax(1, bins[i] / 96.0);
+			bins[i] = fmin(1, bins[i] / 96.0);
 		}
+
+		printf("%f\n", find_peak_frequency(bins, num_bins));
 	}
 
 	fftw_destroy_plan(plan);
