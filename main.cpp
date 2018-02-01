@@ -6,7 +6,7 @@
 
 int main(int argc, char *argv[1])
 {
-	size_t samples_per_period = 22050;
+	size_t samples_per_period = 11025;
 
 	snd_pcm_t *pcm_handle = get_pcm_capture_handle();
 	short *chunk = new short[samples_per_period * snd_pcm_format_width(format) / 8];
