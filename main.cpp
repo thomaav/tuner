@@ -13,7 +13,7 @@ constexpr double alpha = 0.54;
 constexpr double beta  = 0.46;
 
 constexpr int sample_rate = 44100;
-constexpr int fft_size = 1024;
+constexpr int fft_size = 4096;
 constexpr int num_bins = fft_size / 2;
 constexpr int step_size = fft_size / 2; // 50% window overlap
 
@@ -38,7 +38,8 @@ double find_peak_frequency(double *bins, int frame_size)
 	int peak_bin = 0;
 	double peak = bins[peak_bin];
 
-	for (int i = 0; i < frame_size; ++i) {
+	// amount of bins is frame_size / 2, once again
+	for (int i = 0; i < frame_size / 2; ++i) {
 		if (bins[i] > peak) {
 			peak = bins[i];
 			peak_bin = i;
@@ -95,15 +96,15 @@ void fft(short *samples, size_t nsamples)
 			bins[i] = fmin(1, bins[i] / 96.0);
 		}
 
-		peak = find_peak_frequency(bins, num_bins);
+		peak = find_peak_frequency(bins, fft_size);
 		peaks.push_back(peak);
 	}
 
 	printf("%f\n", find_median_frequency(peaks));
 
-	fftw_destroy_plan(plan);
 	free(hamming_window);
 	fftw_free(in); fftw_free(out);
+	fftw_destroy_plan(plan);
 }
 
 int main(int argc, char *argv[1])
