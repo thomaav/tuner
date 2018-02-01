@@ -93,15 +93,15 @@ void fft(short *samples, size_t nsamples)
 
 int main(int argc, char *argv[1])
 {
-	size_t samples = 44100;
+	size_t samples = 22050;
 
 	snd_pcm_t *pcm_handle = get_pcm_capture_handle();
 	short *chunk = new short[samples * snd_pcm_format_width(format) / 8];
-	get_samples(pcm_handle, chunk, samples);
 
-	write_wav(chunk, samples);
-
-	fft(chunk, samples);
+	for ( ;; ) {
+		get_samples(pcm_handle, chunk, samples);
+		fft(chunk, samples);
+	}
 
 	snd_pcm_close(pcm_handle);
 	free(chunk);
