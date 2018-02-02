@@ -3,9 +3,8 @@
 #include "capture.h"
 
 PCMDevice::PCMDevice()
+	: sample_rate(44100)
 {
-	sample_rate = 44100;
-
 	int err;
 
 	/* open PCM */
@@ -64,7 +63,6 @@ PCMDevice::PCMDevice()
 			snd_strerror(err));
 		exit(1);
 	}
-
 
 	printf("Audio interface prepared\n");
 }

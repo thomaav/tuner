@@ -16,4 +16,4 @@ double interpolate_peak_bin(double left, double mid, double right);
 double bin_to_frequency(double bin, double sample_rate, double frame_size);
 double find_peak_frequency(double *bins, int frame_size);
 double find_median_frequency(std::vector<double> &peaks);
-void fft(short *samples, size_t nsamples);
+double fft_median_peak_frequency(short *samples, size_t nsamples);

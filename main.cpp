@@ -13,7 +13,7 @@ int main(int argc, char *argv[1])
 
 	for ( ;; ) {
 		pcm_device.get_samples(chunk, samples_per_period);
-		fft(chunk, samples_per_period);
+		printf("%f\n", fft_median_peak_frequency(chunk, samples_per_period));
 	}
 
 	free(chunk);

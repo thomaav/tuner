@@ -52,7 +52,7 @@ double find_median_frequency(std::vector<double> &peaks)
 	return peaks[n];
 }
 
-void fft(short *samples, size_t nsamples)
+double fft_median_peak_frequency(short *samples, size_t nsamples)
 {
 	double peak;
 	std::vector<double> peaks;
@@ -96,10 +96,9 @@ void fft(short *samples, size_t nsamples)
 		peaks.push_back(peak);
 	}
 
-	// find_median_frequency(peaks);
-	printf("%f\n", find_median_frequency(peaks));
-
 	free(hamming_window);
 	fftw_free(in); fftw_free(out);
 	fftw_destroy_plan(plan);
+
+	return find_median_frequency(peaks);
 }
