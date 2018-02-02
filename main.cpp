@@ -3,6 +3,7 @@
 #include "capture.h"
 #include "wav.h"
 #include "fft.h"
+#include "notes.h"
 
 int main(int argc, char *argv[1])
 {
