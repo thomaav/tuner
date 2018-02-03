@@ -84,10 +84,11 @@ double fft_median_peak_frequency(short *samples, size_t nsamples)
 
 	float bins_float[num_bins];
 	float bins_float_ds[num_bins];
+	float hps_bins[num_bins];
 
 	SRC_DATA converter_data;
 	converter_data.input_frames = converter_data.output_frames = num_bins;
-	converter_data.end_of_input = 0;
+	converter_data.end_of_input = 1;
 
 	for (int x = 0; x < nsamples / step_size; ++x) {
 		// process all samples of one FFT period, i.e. period
@@ -102,25 +103,32 @@ double fft_median_peak_frequency(short *samples, size_t nsamples)
 		// spectrogram, only the first fft_size / 2 bins are
 		// useful
 		for (int i = 0; i < num_bins; ++i) {
-			bins[i] = sqrt(out[i][0] * out[i][0] + out[i][1] * out[i][1]);
-			bins[i] = 10.0 / log(10.0) * log(bins[i] + 1e-6);
+			bins[i] = 10.0 * log(out[i][0] * out[i][0] + out[i][1] * out[i][1]) / log(10);
 			bins[i] = fmax(0, bins[i]);
 		}
 
 		std::copy(bins, bins + num_bins, bins_float);
-		converter_data.data_in = bins_float;
-		converter_data.data_out = bins_float_ds;
+		std::copy(bins_float, bins_float + num_bins, hps_bins);
 
-		for (int i = 2; i < 6; ++i) {
-			src_reset(downsample_converter);
+		for (int i = 2; i < 3; ++i) {
+			err = src_reset(downsample_converter);
+
 			converter_data.src_ratio = double(i);
-			src_process(downsample_converter, &converter_data);
-			for (int j = 0; j < num_bins / i; ++j) {
-				bins_float[j] *= bins_float_ds[j];
+			converter_data.data_in = bins_float;
+			converter_data.data_out = bins_float_ds;
+
+			if ((err = src_process(downsample_converter, &converter_data))) {
+				printf("Unable to downsample sampling data (%s)\n",
+				       src_strerror(err));
+				exit(1);
+			}
+
+			for (int j = 0; j < num_bins; ++j) {
+				hps_bins[j] *= bins_float_ds[j];
 			}
 		}
 
-		std::copy(bins_float, bins_float + num_bins, bins);
+		std::copy(hps_bins, hps_bins + num_bins, bins);
 
 		peak = find_peak_frequency(bins, fft_size);
 		peaks.push_back(peak);
