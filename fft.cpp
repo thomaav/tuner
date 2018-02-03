@@ -103,7 +103,7 @@ double fft_median_peak_frequency(short *samples, size_t nsamples)
 		// spectrogram, only the first fft_size / 2 bins are
 		// useful
 		for (int i = 0; i < num_bins; ++i)
-			bins[i] = 10.0 * log(out[i][0] * out[i][0] + out[i][1] * out[i][1]) / log(10);
+			bins[i] = 10.0 * log10(out[i][0] * out[i][0] + out[i][1] * out[i][1]);
 			// bins[i] = fmax(0, bins[i]);
 
 		// libresample expects floats, use an accumulator to

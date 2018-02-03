@@ -42,9 +42,6 @@ int main(int argc, char *argv[1])
 		pcm_device.get_samples(chunk, samples_per_period);
 		peak = fft_median_peak_frequency(chunk, samples_per_period);
 
-		if (peak < 60.0)
-			peak = 0.0;
-
 		printf("Peak frequency: %f\r", peak);
 		fflush(stdout);
 	}
