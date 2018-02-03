@@ -5,7 +5,7 @@ LDLIBS=-lasound -lfftw3 -lsamplerate
 OBJ_DIR=objects
 OBJS=$(patsubst %.cpp, $(OBJ_DIR)/%.o, $(wildcard *.cpp))
 
-main.bin: $(OBJS)
+tuner.bin: $(OBJS)
 	${CC} ${CFLAGS} $^ ${LDLIBS} -o $@
 
 $(OBJ_DIR)/%.o: %.cpp
@@ -20,4 +20,4 @@ clean:
 
 .PHONY: run
 run:
-	-make && ./main.bin
+	-make && ./tuner.bin
