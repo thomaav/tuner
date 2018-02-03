@@ -32,9 +32,10 @@ double bin_to_frequency(double bin, double sample_rate, double frame_size)
 
 double find_peak_frequency(double *bins, int frame_size)
 {
-	// ignore the first 5 bins, i.e. ones that are less than ~50Hz
-	// with sample rate 44100 and fft size of 4096
-	int peak_bin = 5;
+	// ignore the first 7 bins, i.e. ones that are less than ~75Hz
+	// with sample rate 44100 and fft size of 4096, since low E is
+	// 82 Hz
+	int peak_bin = 7;
 	double peak = bins[peak_bin];
 
 	// amount of bins is frame_size / 2, once again
