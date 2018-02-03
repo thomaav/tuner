@@ -31,7 +31,7 @@ int main(int argc, char *argv[1])
 	double peak;
 
 	PCMDevice pcm_device{};
-	short *chunk = new short[samples_per_period * snd_pcm_format_width(format) / 8];
+	short *chunk = new short[samples_per_period * snd_pcm_format_width(PCMDevice::format) / 8];
 
 	disable_cursor();
 	signal(SIGINT, sigbye);

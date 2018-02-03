@@ -2,8 +2,10 @@
 
 #include "capture.h"
 
+unsigned int PCMDevice::sample_rate = 44100;
+constexpr char PCMDevice::pcm_name[];
+
 PCMDevice::PCMDevice()
-	: sample_rate(44100)
 {
 	int err;
 
