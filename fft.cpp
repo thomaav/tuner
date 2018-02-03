@@ -69,26 +69,25 @@ double fft_median_peak_frequency(short *samples, size_t nsamples)
 	fftw_complex *out;
 	double bins[num_bins];
 	fftw_plan plan;
-
 	double *hamming_window = hamming(fft_size);
 
 	in = fftw_alloc_real(fft_size);
 	out = (fftw_complex *) fftw_malloc(sizeof(fftw_complex) * fft_size);
 	plan = fftw_plan_dft_r2c_1d(fft_size, in, out, FFTW_ESTIMATE);
 
-	// downsampling
-	SRC_STATE *downsample_converter = src_new(SRC_SINC_BEST_QUALITY, 1, &err);
+	// downsampling for HPS
+	SRC_STATE *src_state = src_new(SRC_SINC_BEST_QUALITY, 1, &err);
 	if (err < 0) {
 		printf("Unable to initialize sample rate converter object (%s)\n", src_strerror(err));
 	}
 
-	float bins_float[num_bins];
-	float bins_float_ds[num_bins];
-	float hps_bins[num_bins];
+	float base_bins[num_bins];
+	float downsampled_bins[num_bins];
+	float hps_bins_acc[num_bins];
 
-	SRC_DATA converter_data;
-	converter_data.input_frames = converter_data.output_frames = num_bins;
-	converter_data.end_of_input = 1;
+	SRC_DATA src_data;
+	src_data.end_of_input = 1;
+	src_data.input_frames = num_bins;
 
 	for (int x = 0; x < nsamples / step_size; ++x) {
 		// process all samples of one FFT period, i.e. period
@@ -102,33 +101,38 @@ double fft_median_peak_frequency(short *samples, size_t nsamples)
 		// process values into values relevant to create
 		// spectrogram, only the first fft_size / 2 bins are
 		// useful
-		for (int i = 0; i < num_bins; ++i) {
+		for (int i = 0; i < num_bins; ++i)
 			bins[i] = 10.0 * log(out[i][0] * out[i][0] + out[i][1] * out[i][1]) / log(10);
-			bins[i] = fmax(0, bins[i]);
-		}
+			// bins[i] = fmax(0, bins[i]);
 
-		std::copy(bins, bins + num_bins, bins_float);
-		std::copy(bins_float, bins_float + num_bins, hps_bins);
+		// libresample expects floats, use an accumulator to
+		// iterate easily
+		std::copy(bins, bins + num_bins, base_bins);
+		std::copy(base_bins, base_bins + num_bins, hps_bins_acc);
 
-		for (int i = 2; i < 3; ++i) {
-			err = src_reset(downsample_converter);
+		// decimate bins of dB values
+		for (int i = 2; i < 6; ++i) {
+			err = src_reset(src_state);
 
-			converter_data.src_ratio = double(i);
-			converter_data.data_in = bins_float;
-			converter_data.data_out = bins_float_ds;
+			src_data.src_ratio = 1.0 / i;
+			src_data.data_in = base_bins;
+			src_data.data_out = downsampled_bins;
+			src_data.output_frames = num_bins / i;
 
-			if ((err = src_process(downsample_converter, &converter_data))) {
+			if ((err = src_process(src_state, &src_data))) {
 				printf("Unable to downsample sampling data (%s)\n",
 				       src_strerror(err));
 				exit(1);
 			}
 
-			for (int j = 0; j < num_bins; ++j) {
-				hps_bins[j] *= bins_float_ds[j];
+			for (int j = 0; j < num_bins / i; ++j) {
+				hps_bins_acc[j] *= downsampled_bins[j];
 			}
 		}
 
-		std::copy(hps_bins, hps_bins + num_bins, bins);
+		// accumulator now holds the results of our HPS, which
+		// we can pass as doubles to our peak finder
+		std::copy(hps_bins_acc, hps_bins_acc + num_bins, bins);
 
 		peak = find_peak_frequency(bins, fft_size);
 		peaks.push_back(peak);
@@ -137,7 +141,7 @@ double fft_median_peak_frequency(short *samples, size_t nsamples)
 	free(hamming_window);
 	fftw_free(in); fftw_free(out);
 	fftw_destroy_plan(plan);
-	src_delete(downsample_converter);
+	src_delete(src_state);
 
 	return find_median_frequency(peaks);
 }
