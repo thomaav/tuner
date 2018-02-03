@@ -20,7 +20,7 @@ void disable_cursor()
 	fflush(stdout);
 }
 
-void sigint(int _)
+void sigbye(int _)
 {
 	run = 0;
 }
@@ -34,7 +34,8 @@ int main(int argc, char *argv[1])
 	short *chunk = new short[samples_per_period * snd_pcm_format_width(format) / 8];
 
 	disable_cursor();
-	signal(SIGINT, sigint);
+	signal(SIGINT, sigbye);
+	signal(SIGTERM, sigbye);
 	printf("\n\n\n");
 
 	while (run) {
